@@ -1,0 +1,35 @@
+name: Security Gate (por commit)
+
+# Este es el "antes vs. después" de la charla: agregar ESTE archivo
+# es lo único que separa a este repo de estar en el 12% que sí escanea
+# cada commit. Corre en cada push/PR, igual que el CI de build/test,
+# pero ahora con un paso real de seguridad.
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Bandit
+        run: pip install bandit
+
+      - name: Run Bandit (SAST) sobre src/
+        run: bandit -r src/ -f txt
+
+      - name: Escaneo de dependencias vulnerables (pip-audit)
+        run: |
+          pip install pip-audit
+          pip install -r requirements.txt
+          pip-audit -r requirements.txt
